@@ -123,13 +123,9 @@ def submit(request, course_id):
                 value = request.POST[key]
                 choice_id = int(value)
                 submitted_anwsers.append(choice_id)
-                thechoice = Choice.objects.get(pk=choice_id)
-                nnnn = newSubmit.submission_chocies_set.create(submission_id=newSubmit, choice_id=thechoice)
-                print('***************************')
-                print(dir(nnnn))
-                print('***************************')
-                
-        return HttpResponseRedirect(reverse(viewname="onlinecourse:show_exam_result", args=(course.id, nnnn.id)))
+        nnnn = newSubmit.submission_chocies_set.create(submission_id=newSubmit.id, choice_id=submitted_anwsers)        
+        
+        return HttpResponseRedirect(reverse(viewname="onlinecourse:show_exam_result", args=(course.id, newSubmit.id)))
                 
 
 
@@ -154,6 +150,15 @@ def show_exam_result(request, course_id, submission_id):
     context = {}
     course = Course.objects.get(pk=course_id)
     submission = submission_chocies.objects.get(pk=submission_id)
+    subcho = submission_chocies.objects.get(submission_id=submission_id)
+    print("*****************************")
+    print(subcho.choice_id.split())
+    # for question in course.question_set.get_queryset():
+    #    print(Question.is_get_score(question, list(subcho.choice_id)))
+    
+    print("*****************************")
+
+
     context["course"] = course
 
     return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
