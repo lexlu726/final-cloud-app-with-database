@@ -38,10 +38,12 @@
 <div class="container-fluid">
     {% if grade > 80 %}
     <div class="alert alert-success">
+        <h4> <b>Congratulations, {{user}}!</b> You have passed the exam and completed the course with score {{grade}}/100</h4>
        <!--HINT Display passed info -->
     </div>
         {% else %}
         <div class="alert alert-danger">
+            <h4> <b>Failed</b> Sorry, {{user}}! you have fialed exam with score {{grade}}/100</h4>
             <!--HINT Display failed info -->
         </div>
         <a class="btn btn-link text-danger" href="{% url 'onlinecourse:course_details' course.id %}">Re-test</a>
@@ -49,6 +51,40 @@
         <div class="card-columns-vertical mt-1">
         <h5 class="">Exam results</h5>
             <!--HINT Display exam results-->
+            <div class="card-columns-vertical">
+                
+                <div class="card mt-1">
+                    <button type="button" class="btn btn-success btn-block" data-toggle="collapse" data-target="#demo">Start Exam</button>
+                    <form id="questionform" action="{% url 'onlinecourse:submit' course.id %}" method="post">
+                        {% for question in course.question_set.all %}
+                        <div class="card mt-1">
+                            <div class="card-header"><h5>{{ question.question_text}}</h5></div>
+                            {% csrf_token %}
+                            <div class="form-group">
+                               <!-- ... for each choice in the question ... -->
+                               
+                                <div class="form-check">
+                                    {% for choice in question.choice_set.all %}
+                                    {% if choice.is_correct == True %}
+                                    <h4><font color="green">Courrect Answer: {{choice.choice_text}}</font> </h4>
+                                    {% else %}
+                                    <p>{{choice.choice_text}}</p>
+                                    {% endif %}
+                                    {% endfor %}
+                                    {% if question.id not in ticked %}
+                                    <p><font color="orange">Not selected: Perform ORM for developers</font> </p>
+                                    {% endif %}
+                                </div>
+                                
+
+                            </div>
+                        </div>
+
+                        
+                        {% endfor %}
+                    <input class="btn btn-success btn-block" type="submit" value="Submit">
+                </div>
+            </div>
         </div>
     </div>
 </body>

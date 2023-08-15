@@ -111,20 +111,24 @@ def enroll(request, course_id):
          # Add each selected choice object to the submission object
          # Redirect to show_exam_result with the submission id
 def submit(request, course_id):
-    submitted_anwsers = []
+    def extract_answers(request):
+        submitted_anwsers = []
+        for key in request.POST:
+            if key.startswith('choice'):
+                value = request.POST[key]
+                choice_id = int(value)
+                submitted_anwsers.append(choice_id)
+        return submitted_anwsers
     if request.method == "POST":
         user = request.user
         course = Course.objects.get(pk=course_id)
         enroll = Enrollment.objects.get(user=user, course=course)
         newSubmit = Submission.objects.create(enrollment=enroll)
         
-        for key in request.POST:
-            if key.startswith('choice'):
-                value = request.POST[key]
-                choice_id = int(value)
-                submitted_anwsers.append(choice_id)
-        nnnn = newSubmit.submission_chocies_set.create(submission_id=newSubmit.id, choice_id=submitted_anwsers)        
-        
+        chooseanswers = extract_answers(request)
+        nnnn = newSubmit.submission_chocies_set.create(submission_id=newSubmit.id, answerPool=chooseanswers) 
+        for chID in chooseanswers:
+            nnnn.choice_id.add(Choice.objects.get(pk=chID)) 
         return HttpResponseRedirect(reverse(viewname="onlinecourse:show_exam_result", args=(course.id, newSubmit.id)))
                 
 
@@ -151,15 +155,26 @@ def show_exam_result(request, course_id, submission_id):
     course = Course.objects.get(pk=course_id)
     submission = submission_chocies.objects.get(pk=submission_id)
     subcho = submission_chocies.objects.get(submission_id=submission_id)
-    print("*****************************")
-    print(subcho.choice_id.split())
-    # for question in course.question_set.get_queryset():
-    #    print(Question.is_get_score(question, list(subcho.choice_id)))
-    
-    print("*****************************")
+    grade = 0 
 
+    tickQuestion = [] 
+    selectedI = [] 
+    for cho in subcho.choice_id.get_queryset():
+        if cho.question_id.id not in tickQuestion:
+            tickQuestion.append(cho.question_id.id)
+        
+        selectedI.append(cho.id)
+    for question in course.question_set.get_queryset():
+        judge = Question.is_get_score(question, selectedI)
+        if judge == True:
+            grade = grade + question.grade
 
+    print(tickQuestion)
     context["course"] = course
+    context["grade"] = grade
+    context["selected"] = selectedI
+    context["ticked"] = tickQuestion
+    context["user"] = request.user    
 
     return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
